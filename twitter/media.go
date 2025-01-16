@@ -86,6 +86,11 @@ type mediaFinalizeParams struct {
 	MediaID int64  `url:"media_id"`
 }
 
+type MediaUploadParams struct {
+	AdditionalOwners *string `url:"additional_owners"`
+	MediaCategory    *string `url:"media_category"`
+}
+
 // Upload sends a piece of media to twitter. You must provide a byte
 // slice containing the file contents and the MIME type of the
 // file.
@@ -95,7 +100,7 @@ type mediaFinalizeParams struct {
 // MediaFinalizeResult will have the ProcessingInfo field set, and you
 // can periodically poll Status with the MediaID to get the status of
 // the upload.
-func (m *MediaService) Upload(media []byte, mediaType string) (*MediaUploadResult, *http.Response, error) {
+func (m *MediaService) Upload(media []byte, mediaType string, queryParams MediaUploadParams) (*MediaUploadResult, *http.Response, error) {
 
 	if len(media) > maxSize {
 		return nil, nil, fmt.Errorf("file size of %v exceeds twitter maximum %v", len(media), maxSize)
@@ -109,7 +114,7 @@ func (m *MediaService) Upload(media []byte, mediaType string) (*MediaUploadResul
 	res := new(mediaInitResult)
 	apiError := new(APIError)
 
-	resp, err := m.sling.New().Post("upload.json").BodyForm(params).Receive(res, apiError)
+	resp, err := m.sling.New().Post("upload.json").QueryStruct(queryParams).BodyForm(params).Receive(res, apiError)
 
 	if relevantError(err, *apiError) != nil {
 		return nil, resp, relevantError(err, *apiError)
@@ -133,7 +138,7 @@ func (m *MediaService) Upload(media []byte, mediaType string) (*MediaUploadResul
 			SegmentIndex: segment,
 		}
 
-		resp, err = m.sling.New().Post("upload.json").BodyForm(appendParams).Receive(nil, apiError)
+		resp, err = m.sling.New().Post("upload.json").QueryStruct(queryParams).BodyForm(appendParams).Receive(nil, apiError)
 
 		if relevantError(err, *apiError) != nil {
 			return nil, resp, relevantError(err, *apiError)
@@ -146,7 +151,7 @@ func (m *MediaService) Upload(media []byte, mediaType string) (*MediaUploadResul
 	}
 	finalizeRes := new(MediaUploadResult)
 
-	resp, err = m.sling.New().Post("upload.json").BodyForm(finalizeParams).Receive(finalizeRes, apiError)
+	resp, err = m.sling.New().Post("upload.json").QueryStruct(queryParams).BodyForm(finalizeParams).Receive(finalizeRes, apiError)
 
 	if relevantError(err, *apiError) != nil {
 		return nil, resp, relevantError(err, *apiError)

@@ -110,7 +110,7 @@ func TestMediaService_Upload(t *testing.T) {
 	client := NewClient(httpClient)
 
 	for _, test := range tests {
-		resp, _, err := client.Media.Upload(test.data, test.filetype)
+		resp, _, err := client.Media.Upload(test.data, test.filetype, MediaUploadParams{})
 		if (err != nil) != test.wantErr {
 			t.Errorf("Media.Upload(%v): wantErr %v, got %v", test.name, test.wantErr, err != nil)
 			continue
